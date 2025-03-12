@@ -1,0 +1,95 @@
+# a4-to-a6<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crop PDF to A6</title>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+<div class="bg-white shadow-xl rounded-lg p-8 max-w-md w-full">
+    <h1 class="text-2xl font-bold text-center mb-4">Crop PDF to A6</h1>
+
+    <div
+            id="dropZone"
+            class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50"
+    >
+        <p class="text-gray-600">Drag & drop a PDF here or click to select</p>
+        <input type="file" id="fileInput" accept="application/pdf" class="hidden" />
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    // We'll define a function to handle the file once we have it
+    async function handleFile(file) {
+        try {
+            // Convert the file to an array buffer
+            const arrayBuffer = await file.arrayBuffer();
+            // Load PDF with pdf-lib
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+            // A6 dimensions in points
+            const A6_WIDTH = 298;
+            const A6_HEIGHT = 420;
+
+            pdfDoc.getPages().forEach((page) => {
+                const y = page.getHeight() - A6_HEIGHT;
+                // Crop the page using the setCropBox method
+                page.setCropBox(0, y, A6_WIDTH, A6_HEIGHT);
+            });
+
+            // Save the cropped PDF
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+
+            // Create a download link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cropped_a6.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error('Error cropping PDF:', err);
+            alert('Error cropping PDF. Check console for details.');
+        }
+    }
+
+    // Click the drop area to open file dialog
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // When file is chosen via the dialog
+    fileInput.addEventListener('change', (e) => {
+        if (fileInput.files && fileInput.files[0]) {
+            handleFile(fileInput.files[0]);
+        }
+    });
+
+    // Highlight the drop area on dragover
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('bg-blue-100');
+    });
+
+    // Remove highlight when dragging leaves
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('bg-blue-100');
+    });
+
+    // Handle the drop
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('bg-blue-100');
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+</script>
+</body>
+</html>
