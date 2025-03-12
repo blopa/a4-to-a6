@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Crop PDF to A6</title>
+    <title>Crop & Merge PDFs to A6</title>
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
 <div class="bg-white shadow-xl rounded-lg p-8 max-w-md w-full">
-    <h1 class="text-2xl font-bold text-center mb-4">Crop PDF to A6</h1>
-
+    <h1 class="text-2xl font-bold text-center mb-4">Crop & Merge PDFs to A6</h1>
     <div
             id="dropZone"
             class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50"
     >
-        <p class="text-gray-600">Drag & drop a PDF here or click to select</p>
-        <input type="file" id="fileInput" accept="application/pdf" class="hidden" />
+        <p class="text-gray-600">Drag & drop one or more single-page PDFs here or click to select</p>
+        <input type="file" id="fileInput" accept="application/pdf" class="hidden" multiple />
     </div>
 </div>
 
@@ -24,50 +23,65 @@
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
 
-    // We'll define a function to handle the file once we have it
-    async function handleFile(file) {
+    // Handle multiple files at once
+    async function handleFiles(files) {
+        if (!files || files.length === 0) {
+            alert('No files selected!');
+            return;
+        }
+
         try {
-            // Convert the file to an array buffer
-            const arrayBuffer = await file.arrayBuffer();
-            // Load PDF with pdf-lib
-            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+            // Create a new blank PDF document to merge all single-page PDFs
+            const mergedPdf = await PDFLib.PDFDocument.create();
 
             // A6 dimensions in points
             const A6_WIDTH = 298;
             const A6_HEIGHT = 420;
 
-            pdfDoc.getPages().forEach((page) => {
-                const y = page.getHeight() - A6_HEIGHT;
-                // Crop the page using the setCropBox method
-                page.setCropBox(0, y, A6_WIDTH, A6_HEIGHT);
-            });
+            // Loop over each file
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                // Convert file to array buffer
+                const arrayBuffer = await file.arrayBuffer();
+                // Load the single-page PDF
+                const singlePagePdf = await PDFLib.PDFDocument.load(arrayBuffer);
 
-            // Save the cropped PDF
-            const pdfBytes = await pdfDoc.save();
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                // Import that single page into mergedPdf
+                const [importedPage] = await mergedPdf.copyPages(singlePagePdf, [0]);
+
+                // Crop from the top-left corner
+                const originalHeight = importedPage.getHeight();
+                const y = originalHeight - A6_HEIGHT;
+                importedPage.setCropBox(0, y, A6_WIDTH, A6_HEIGHT);
+
+                // Add the cropped page to the merged PDF
+                mergedPdf.addPage(importedPage);
+            }
+
+            // Save the merged PDF
+            const mergedPdfBytes = await mergedPdf.save();
+            const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
             const url = URL.createObjectURL(blob);
 
-            // Create a download link
+            // Auto-download the merged PDF
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'cropped_a6.pdf';
+            a.download = 'merged_cropped_a6.pdf';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         } catch (err) {
-            console.error('Error cropping PDF:', err);
-            alert('Error cropping PDF. Check console for details.');
+            console.error('Error cropping/merging PDFs:', err);
+            alert('Error cropping/merging PDFs. Check console for details.');
         }
     }
 
     // Click the drop area to open file dialog
     dropZone.addEventListener('click', () => fileInput.click());
 
-    // When file is chosen via the dialog
-    fileInput.addEventListener('change', (e) => {
-        if (fileInput.files && fileInput.files[0]) {
-            handleFile(fileInput.files[0]);
-        }
+    // Handle file input selection
+    fileInput.addEventListener('change', () => {
+        handleFiles(fileInput.files);
     });
 
     // Highlight the drop area on dragover
@@ -85,9 +99,8 @@
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('bg-blue-100');
-
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFile(e.dataTransfer.files[0]);
+            handleFiles(e.dataTransfer.files);
         }
     });
 </script>
