@@ -10,6 +10,12 @@
 <body class="bg-gray-100 flex items-center justify-center h-screen">
 <div class="bg-white shadow-xl rounded-lg p-8 max-w-md w-full">
     <h1 class="text-2xl font-bold text-center mb-4">Crop & Merge PDFs to A6</h1>
+    <div class="mb-4">
+        <label class="flex items-center space-x-2">
+            <input type="checkbox" id="hideAddressCheckbox" class="form-checkbox h-4 w-4 text-blue-600">
+            <span class="text-gray-700">Hide address with white block</span>
+        </label>
+    </div>
     <div
             id="dropZone"
             class="border-2 border-dashed border-gray-400 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50"
@@ -22,6 +28,7 @@
 <script>
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
+    const hideAddressCheckbox = document.getElementById('hideAddressCheckbox');
 
     // Handle multiple files at once
     async function handleFiles(files) {
@@ -38,6 +45,9 @@
             const A6_WIDTH = 298;
             const A6_HEIGHT = 420;
 
+            // Check if address hiding is enabled
+            const hideAddress = hideAddressCheckbox.checked;
+
             // Loop over each file
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
@@ -53,6 +63,26 @@
                 const originalHeight = importedPage.getHeight();
                 const y = originalHeight - A6_HEIGHT;
                 importedPage.setCropBox(0, y, A6_WIDTH, A6_HEIGHT);
+
+                // If address hiding is enabled, draw a white rectangle over the address area
+                if (hideAddress) {
+                    // Based on the shipping label layout, the address appears to be in the top-left area
+                    // Adjust these coordinates based on your specific label layout
+                    const addressBlockX = 190;
+                    const addressBlockY = A6_HEIGHT + 295;
+                    const addressBlockWidth = 60;
+                    const addressBlockHeight = 100;
+
+                    importedPage.drawRectangle({
+                        x: addressBlockX,
+                        y: addressBlockY,
+                        width: addressBlockWidth,
+                        height: addressBlockHeight,
+                        color: PDFLib.rgb(1, 1, 1),
+                        // color: PDFLib.rgb(0.8, 0.8, 0.8),
+                        opacity: 1,
+                    });
+                }
 
                 // Add the cropped page to the merged PDF
                 mergedPdf.addPage(importedPage);
