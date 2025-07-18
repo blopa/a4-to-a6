@@ -73,6 +73,7 @@
                     const addressBlockWidth = 60;
                     const addressBlockHeight = 100;
 
+                    // Draw white rectangle
                     importedPage.drawRectangle({
                         x: addressBlockX,
                         y: addressBlockY,
@@ -81,6 +82,30 @@
                         color: PDFLib.rgb(1, 1, 1),
                         // color: PDFLib.rgb(0.8, 0.8, 0.8),
                         opacity: 1,
+                    });
+
+                    // Add custom text over the white block
+                    const fontSize = 8;
+                    const textColor = PDFLib.rgb(0, 0, 0); // Black text
+                    const lineHeight = fontSize + 1;
+                    
+                    // Text lines to add
+                    const textLines = [
+                        "Jubinganga Supply",
+                        "August Allebéplein 18",
+                        "NL - 1062AC Amsterdam",
+                        "+31 6 58828627",
+                    ].reverse();
+
+                    // Draw each line of text
+                    textLines.forEach((line, index) => {
+                        importedPage.drawText(line, {
+                            x: addressBlockX + 10 + (index * lineHeight),
+                            y: addressBlockY + addressBlockHeight - 10,
+                            size: fontSize,
+                            color: textColor,
+                            rotate: PDFLib.degrees(-90),
+                        });
                     });
                 }
 
