@@ -15,8 +15,9 @@
             Hide sender address for:
         </label>
         <select id="hideAddressSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="no">None</option>
+            <option value="none">None</option>
             <option value="dpd">DPD</option>
+            <option value="dhl">DHL</option>
         </select>
     </div>
     <div
@@ -48,8 +49,9 @@
             const A6_WIDTH = 298;
             const A6_HEIGHT = 420;
 
-            // Check if address hiding is enabled
-            const hideAddress = hideAddressSelect.value === 'dpd';
+            // Check if address hiding is enabled and get the carrier type
+            const carrierType = hideAddressSelect.value;
+            const hideAddress = carrierType === 'dpd' || carrierType === 'dhl';
 
             // Loop over each file
             for (let i = 0; i < files.length; i++) {
@@ -69,12 +71,21 @@
 
                 // If address hiding is enabled, draw a white rectangle over the address area
                 if (hideAddress) {
-                    // Based on the shipping label layout, the address appears to be in the top-left area
-                    // Adjust these coordinates based on your specific label layout
-                    const addressBlockX = 190;
-                    const addressBlockY = A6_HEIGHT + 295;
-                    const addressBlockWidth = 60;
-                    const addressBlockHeight = 100;
+                    let addressBlockX, addressBlockY, addressBlockWidth, addressBlockHeight;
+                    
+                    if (carrierType === 'dpd') {
+                        // DPD specific positioning
+                        addressBlockX = 190;
+                        addressBlockY = A6_HEIGHT + 295;
+                        addressBlockWidth = 60;
+                        addressBlockHeight = 100;
+                    } else if (carrierType === 'dhl') {
+                        // DHL specific positioning (adjust these coordinates based on DHL label layout)
+                        addressBlockX = 15;
+                        addressBlockY = A6_HEIGHT - 120;
+                        addressBlockWidth = 180;
+                        addressBlockHeight = 100;
+                    }
 
                     // Draw white rectangle
                     importedPage.drawRectangle({
@@ -98,18 +109,30 @@
                         "August Allebéplein 18",
                         "NL - 1062AC Amsterdam",
                         "+31 6 58828627",
-                    ].reverse();
+                    ];
 
-                    // Draw each line of text
-                    textLines.forEach((line, index) => {
-                        importedPage.drawText(line, {
-                            x: addressBlockX + 10 + (index * lineHeight),
-                            y: addressBlockY + addressBlockHeight - 10,
-                            size: fontSize,
-                            color: textColor,
-                            rotate: PDFLib.degrees(-90),
+                    if (carrierType === 'dpd') {
+                        // DPD: Vertical text (rotated -90 degrees)
+                        textLines.reverse().forEach((line, index) => {
+                            importedPage.drawText(line, {
+                                x: addressBlockX + 10 + (index * lineHeight),
+                                y: addressBlockY + addressBlockHeight - 10,
+                                size: fontSize,
+                                color: textColor,
+                                rotate: PDFLib.degrees(-90),
+                            });
                         });
-                    });
+                    } else if (carrierType === 'dhl') {
+                        // DHL: Horizontal text (no rotation)
+                        textLines.forEach((line, index) => {
+                            importedPage.drawText(line, {
+                                x: addressBlockX + 5,
+                                y: addressBlockY + addressBlockHeight - 15 - (index * lineHeight),
+                                size: fontSize,
+                                color: textColor,
+                            });
+                        });
+                    }
                 }
 
                 // Add the cropped page to the merged PDF
