@@ -104,16 +104,23 @@
                     const lineHeight = fontSize + 1;
                     
                     // Text lines to add
-                    const textLines = [
+                    const dpdTextLines = [
                         "Jubinganga Supply",
                         "August Allebéplein 18",
                         "NL - 1062AC Amsterdam",
                         "+31 6 58828627",
                     ];
 
+                    const dhlTextLines = [
+                        "Jubinganga Supply",
+                        "Postjesweg 100 -H",
+                        "NL - 1057EG Amsterdam",
+                        "+31 6 58828627",
+                    ];
+
                     if (carrierType === 'dpd') {
                         // DPD: Vertical text (rotated -90 degrees)
-                        textLines.reverse().forEach((line, index) => {
+                        dpdTextLines.reverse().forEach((line, index) => {
                             importedPage.drawText(line, {
                                 x: addressBlockX + 10 + (index * lineHeight),
                                 y: addressBlockY + addressBlockHeight - 10,
@@ -124,7 +131,7 @@
                         });
                     } else if (carrierType === 'dhl') {
                         // DHL: Horizontal text (no rotation)
-                        textLines.forEach((line, index) => {
+                        dhlTextLines.forEach((line, index) => {
                             importedPage.drawText(line, {
                                 x: addressBlockX + 5,
                                 y: addressBlockY + addressBlockHeight - 15 - (index * lineHeight),
