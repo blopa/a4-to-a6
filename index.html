@@ -54,8 +54,8 @@
             const hideAddress = carrierType === 'dpd' || carrierType === 'dhl';
 
             // Loop over each file
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            for (const element of files) {
+                const file = element;
                 // Convert file to array buffer
                 const arrayBuffer = await file.arrayBuffer();
                 // Load the single-page PDF
@@ -82,7 +82,7 @@
                     } else if (carrierType === 'dhl') {
                         // DHL specific positioning (adjust these coordinates based on DHL label layout)
                         addressBlockX = 50;
-                        addressBlockY = A6_HEIGHT + 339;
+                        addressBlockY = A6_HEIGHT + 333;
                         addressBlockWidth = 100;
                         addressBlockHeight = 45;
                     }
